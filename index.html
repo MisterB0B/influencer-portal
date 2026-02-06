@@ -630,6 +630,19 @@
   <script>
     setTimeout(() => document.getElementById('splash').classList.add('hidden'), 1500);
     
+    // === BACKUP FUNCTION (APP STANDARD) ===
+    function backupAllData() {
+      try {
+        const backup = { version: '2026.02.06', app: 'influencer-portal', exportedAt: new Date().toISOString(), localStorage: JSON.stringify(localStorage) };
+        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `influencer-portal-backup-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        alert('✅ Backup downloaded!');
+      } catch(e) { alert('Backup error: ' + e.message); }
+    }
+    
     function showPage(id) {
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
