@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Influencer Portal | The Light Park</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --surface2: #1a1a25;
+      --border: #2a2a3a;
+      --text: #f0f0f5;
+      --text-dim: #8888a0;
+      --purple: #a855f7;
+      --teal: #06d6a0;
+      --pink: #ec4899;
+      --red: #ef4444;
+      --yellow: #eab308;
+      --green: #22c55e;
+    }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    
+    #splash {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100vh;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999; transition: opacity 0.5s;
+    }
+    #splash.hidden { opacity: 0; pointer-events: none; }
+    #splash img { max-width: 80%; max-height: 40vh; }
+    
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .header-logo { height: 40px; }
+    
+    .user-info {
+      display: flex; align-items: center; gap: 12px;
+    }
+    
+    .user-avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--purple), var(--teal));
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 600;
+    }
+    
+    .nav {
+      display: flex; gap: 4px; padding: 12px 16px;
+      background: var(--surface);
+      overflow-x: auto; border-bottom: 1px solid var(--border);
+    }
+    
+    .nav-btn {
+      padding: 10px 16px; border-radius: 8px; border: none;
+      background: transparent; color: var(--text-dim);
+      font-size: 13px; font-weight: 500; cursor: pointer;
+      white-space: nowrap;
+    }
+    .nav-btn:hover { background: var(--surface2); color: var(--text); }
+    .nav-btn.active { background: var(--purple); color: #fff; }
+    
+    .main { padding: 20px; max-width: 900px; margin: 0 auto; }
+    
+    .page { display: none; }
+    .page.active { display: block; }
+    
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    
+    .section-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    
+    .section-title { font-size: 16px; font-weight: 600; }
+    .section-body { padding: 16px 20px; }
+    
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px; margin-bottom: 20px;
+    }
+    
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px; text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 32px; font-weight: 700;
+      background: linear-gradient(135deg, var(--purple), var(--teal));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .stat-label { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+    
+    .reward-tier {
+      display: flex; align-items: center; gap: 16px;
+      padding: 16px;
+      background: var(--surface2);
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+    
+    .tier-icon {
+      font-size: 32px; width: 60px; text-align: center;
+    }
+    
+    .tier-info { flex: 1; }
+    .tier-name { font-weight: 600; font-size: 16px; }
+    .tier-requirement { font-size: 13px; color: var(--text-dim); }
+    
+    .tier-reward {
+      background: linear-gradient(135deg, var(--purple), var(--teal));
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    
+    .reward-tier.achieved {
+      border: 2px solid var(--green);
+      background: rgba(34, 197, 94, 0.1);
+    }
+    
+    .video-item {
+      display: flex; align-items: center; gap: 16px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .video-item:last-child { border-bottom: none; }
+    
+    .video-thumb {
+      width: 80px; height: 80px;
+      background: var(--surface2);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+    }
+    
+    .video-info { flex: 1; }
+    .video-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+    .video-meta { font-size: 12px; color: var(--text-dim); }
+    
+    .video-stats { text-align: right; }
+    .video-views { font-size: 20px; font-weight: 700; color: var(--teal); }
+    .video-platform { font-size: 11px; color: var(--text-dim); }
+    
+    .link-box {
+      background: var(--surface2);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    
+    .link-label {
+      font-size: 12px; color: var(--text-dim);
+      margin-bottom: 6px;
+    }
+    
+    .link-value {
+      font-family: monospace;
+      font-size: 13px;
+      color: var(--teal);
+      word-break: break-all;
+    }
+    
+    .copy-btn {
+      background: var(--purple);
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    
+    .asset-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+    }
+    
+    .asset-card {
+      background: var(--surface2);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .asset-card:hover {
+      border: 1px solid var(--purple);
+      transform: translateY(-2px);
+    }
+    
+    .asset-icon { font-size: 32px; margin-bottom: 8px; }
+    .asset-name { font-size: 13px; font-weight: 500; }
+    .asset-type { font-size: 11px; color: var(--text-dim); }
+    
+    .suggestion-card {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(6, 214, 160, 0.1));
+      border: 1px solid var(--purple);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    
+    .suggestion-badge {
+      display: inline-block;
+      background: var(--purple);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+    
+    .suggestion-title { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+    .suggestion-desc { font-size: 13px; color: var(--text-dim); }
+    
+    .form-group { margin-bottom: 16px; }
+    .form-label { font-size: 13px; color: var(--text-dim); margin-bottom: 6px; display: block; }
+    .form-input {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+    }
+    .form-input:focus { outline: none; border-color: var(--purple); }
+    
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--purple), var(--teal));
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    
+    @media (max-width: 600px) {
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .video-item { flex-wrap: wrap; }
+      .video-stats { width: 100%; text-align: left; margin-top: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="splash">
+    <img src="logo.jpg" alt="Influencer Portal">
+  </div>
+  
+  <header class="header">
+    <img src="logo.jpg" alt="Influencer" class="header-logo">
+    <div class="user-info">
+      <span style="font-size: 14px;">@sarahcreates</span>
+      <div class="user-avatar">SC</div>
+    </div>
+  </header>
+  
+  <nav class="nav">
+    <button class="nav-btn active" onclick="showPage('dashboard')">📊 Dashboard</button>
+    <button class="nav-btn" onclick="showPage('videos')">🎬 My Videos</button>
+    <button class="nav-btn" onclick="showPage('rewards')">🏆 Rewards</button>
+    <button class="nav-btn" onclick="showPage('links')">🔗 My Links</button>
+    <button class="nav-btn" onclick="showPage('assets')">📦 Assets</button>
+    <button class="nav-btn" onclick="showPage('suggestions')">💡 Ideas</button>
+    <button class="nav-btn" onclick="showPage('submit')">➕ Submit Video</button>
+  </nav>
+  
+  <main class="main">
+    
+    <!-- Dashboard -->
+    <div class="page active" id="dashboard">
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-value">124K</div>
+          <div class="stat-label">Total Views</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">5</div>
+          <div class="stat-label">Videos Submitted</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">$150</div>
+          <div class="stat-label">Earned</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">47</div>
+          <div class="stat-label">Tickets Sold</div>
+        </div>
+      </div>
+      
+      <div class="section">
+        <div class="section-header">
+          <h3 class="section-title">🏆 Current Tier</h3>
+        </div>
+        <div class="section-body">
+          <div class="reward-tier achieved">
+            <div class="tier-icon">⭐</div>
+            <div class="tier-info">
+              <div class="tier-name">Star Creator</div>
+              <div class="tier-requirement">100K+ views achieved!</div>
+            </div>
+            <div class="tier-reward">$150 Earned</div>
+          </div>
+          <p style="font-size: 13px; color: var(--text-dim); margin-top: 12px;">
+            Next tier: <strong>Elite Creator</strong> at 250K views (+$200 bonus)
+          </p>
+        </div>
+      </div>
+      
+      <div class="section">
+        <div class="section-header">
+          <h3 class="section-title">🎬 Top Performing Video</h3>
+        </div>
+        <div class="section-body">
+          <div class="video-item" style="border: none; padding: 0;">
+            <div class="video-thumb">🎥</div>
+            <div class="video-info">
+              <div class="video-title">OMG this light show is INSANE 🤯✨</div>
+              <div class="video-meta">Posted Dec 8 · TikTok</div>
+            </div>
+            <div class="video-stats">
+              <div class="video-views">87.2K</div>
+              <div class="video-platform">views</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- My Videos -->
+    <div class="page" id="videos">
+      <div class="section">
+        <div class="section-header">
+          <h3 class="section-title">🎬 Submitted Videos</h3>
+          <span style="color: var(--teal);">5 videos · 124K total views</span>
+        </div>
+        <div class="section-body">
+          <div class="video-item">
+            <div class="video-thumb">🎥</div>
+            <div class="video-info">
+              <div class="video-title">OMG this light show is INSANE 🤯✨</div>
+              <div class="video-meta">Dec 8 · TikTok</div>
+            </div>
+            <div class="video-stats">
+              <div class="video-views">87.2K</div>
+              <div class="video-platform">views</div>
+            </div>
+          </div>
+          <div class="video-item">
+            <div class="video-thumb">🎥</div>
+            <div class="video-info">
+              <div class="video-title">Taking my family to The Light Park ✨</div>
+              <div class="video-meta">Dec 12 · TikTok</div>
+            </div>
+            <div class="video-stats">
+              <div class="video-views">21.4K</div>
+              <div class="video-platform">views</div>
+            </div>
+          </div>
+          <div class="video-item">
+            <div class="video-thumb">🎥</div>
+            <div class="video-info">
+              <div class="video-title">The tunnel reveal moment 🚗💡</div>
+              <div class="video-meta">Dec 14 · Instagram</div>
+            </div>
+            <div class="video-stats">
+              <div class="video-views">8.9K</div>
+              <div class="video-platform">views</div>
+            </div>
+          </div>
+          <div class="video-item">
+            <div class="video-thumb">🎥</div>
+            <div class="video-info">
+              <div class="video-title">DJ Polar Ice is so cute! 🐻‍❄️</div>
+              <div class="video-meta">Dec 18 · TikTok</div>
+            </div>
+            <div class="video-stats">
+              <div class="video-views">4.2K</div>
+              <div class="video-platform">views</div>
+            </div>
+          </div>
+          <div class="video-item">
+            <div class="video-thumb">🎥</div>
+            <div class="video-info">
+              <div class="video-title">Christmas date night idea 💕</div>
+              <div class="video-meta">Dec 20 · TikTok</div>
+            </div>
+            <div class="video-stats">
+              <div class="video-views">2.3K</div>
+              <div class="video-platform">views</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Rewards -->
+    <div class="page" id="rewards">
+      <div class="section">
+        <div class="section-header">
+          <h3 class="section-title">🏆 Reward Tiers</h3>
+        </div>
+        <div class="section-body">
+          <div class="reward-tier achieved">
+            <div class="tier-icon">🌟</div>
+            <div class="tier-info">
+              <div class="tier-name">Rising Star</div>
+              <div class="tier-requirement">10K+ views</div>
+            </div>
+            <div class="tier-reward">2 Free Tickets</div>
+          </div>
+          <div class="reward-tier achieved">
+            <div class="tier-icon">⭐</div>
+            <div class="tier-info">
+              <div class="tier-name">Star Creator</div>
+              <div class="tier-requirement">100K+ views</div>
+            </div>
+            <div class="tier-reward">$150 Cash</div>
+          </div>
+          <div class="reward-tier">
+            <div class="tier-icon">💎</div>
+            <div class="tier-info">
+              <div class="tier-name">Elite Creator</div>
+              <div class="tier-requirement">250K+ views</div>
+            </div>
+            <div class="tier-reward">$350 Cash</div>
+          </div>
+          <div class="reward-tier">
+            <div class="tier-icon">👑</div>
+            <div class="tier-info">
+              <div class="tier-name">Legend</div>
+              <div class="tier-requirement">1M+ views</div>
+            </div>
+            <div class="tier-reward">$1,000 + VIP Season Pass</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- My Links -->
+    <div class="page" id="links">
+      <div class="section">
+        <div class="section-header">
+          <h3 class="section-title">🔗 Your Tracking Links</h3>
+        </div>
+        <div class="section-body">
+          <div class="link-box">
+            <div class="link-label">Your Affiliate Link (tracks all sales)</div>
+            <div class="link-value">https://tickets.thelightpark.com/?ref=sarahcreates</div>
+            <button class="copy-btn" onclick="copyLink(this)">📋 Copy Link</button>
+          </div>
+          <div class="link-box">
+            <div class="link-label">Your Promo Code (10% off for followers)</div>
+            <div class="link-value" style="font-size: 20px; color: var(--purple);">SARAH10</div>
+            <button class="copy-btn" onclick="copyLink(this)">📋 Copy Code</button>
+          </div>
+          <p style="font-size: 13px; color: var(--text-dim); margin-top: 16px;">
+            🎯 <strong>47 tickets sold</strong> through your link this season!
+          </p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Assets -->
+    <div class="page" id="assets">
+      <div class="section">
+        <div class="section-header">
+          <h3 class="section-title">📦 Creator Assets</h3>
+        </div>
+        <div class="section-body">
+          <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 16px;">
+            Download these approved assets for your content.
+          </p>
+          <div class="asset-grid">
+            <div class="asset-card">
+              <div class="asset-icon">🖼️</div>
+              <div class="asset-name">Logo Pack</div>
+              <div class="asset-type">PNG, SVG</div>
+            </div>
+            <div class="asset-card">
+              <div class="asset-icon">🎬</div>
+              <div class="asset-name">B-Roll Clips</div>
+              <div class="asset-type">MP4</div>
+            </div>
+            <div class="asset-card">
+              <div class="asset-icon">🎵</div>
+              <div class="asset-name">Audio Clips</div>
+              <div class="asset-type">MP3</div>
+            </div>
+            <div class="asset-card">
+              <div class="asset-icon">📝</div>
+              <div class="asset-name">Captions</div>
+              <div class="asset-type">TXT</div>
+            </div>
+            <div class="asset-card">
+              <div class="asset-icon">#️⃣</div>
+              <div class="asset-name">Hashtags</div>
+              <div class="asset-type">Copy/Paste</div>
+            </div>
+            <div class="asset-card">
+              <div class="asset-icon">📋</div>
+              <div class="asset-name">Guidelines</div>
+              <div class="asset-type">PDF</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Suggestions -->
+    <div class="page" id="suggestions">
+      <div class="section">
+        <div class="section-header">
+          <h3 class="section-title">💡 Content Ideas</h3>
+          <span style="font-size: 12px; color: var(--text-dim);">Updated daily</span>
+        </div>
+        <div class="section-body">
+          <div class="suggestion-card">
+            <span class="suggestion-badge">🔥 TRENDING</span>
+            <div class="suggestion-title">POV: Taking your date to the lights</div>
+            <div class="suggestion-desc">Romantic angle is performing well. Use trending audio "Until I Found You".</div>
+          </div>
+          <div class="suggestion-card">
+            <span class="suggestion-badge">⭐ HIGH POTENTIAL</span>
+            <div class="suggestion-title">Tunnel reveal reaction</div>
+            <div class="suggestion-desc">Film passenger reaction entering the tunnel. Genuine reactions = viral.</div>
+          </div>
+          <div class="suggestion-card">
+            <span class="suggestion-badge">🎯 BRAND FOCUS</span>
+            <div class="suggestion-title">DJ Polar Ice meet & greet</div>
+            <div class="suggestion-desc">Mascot content performs great with families. Tag @thelightpark.</div>
+          </div>
+          <div class="suggestion-card">
+            <span class="suggestion-badge">📈 ALGORITHM TIP</span>
+            <div class="suggestion-title">Post between 7-9pm CST</div>
+            <div class="suggestion-desc">Peak engagement for family content. Caption: "Who wants to see more? 🎄"</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Submit Video -->
+    <div class="page" id="submit">
+      <div class="section">
+        <div class="section-header">
+          <h3 class="section-title">➕ Submit New Video</h3>
+        </div>
+        <div class="section-body">
+          <div class="form-group">
+            <label class="form-label">Video URL</label>
+            <input type="url" class="form-input" placeholder="https://tiktok.com/@you/video/...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Platform</label>
+            <select class="form-input">
+              <option>TikTok</option>
+              <option>Instagram Reels</option>
+              <option>YouTube Shorts</option>
+              <option>YouTube</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Video Title/Description</label>
+            <input type="text" class="form-input" placeholder="What's your video about?">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Which location did you visit?</label>
+            <select class="form-input">
+              <option>Katy</option>
+              <option>Spring</option>
+              <option>Selma</option>
+              <option>Missions</option>
+              <option>Arlington</option>
+              <option>Frisco</option>
+              <option>Round Rock</option>
+              <option>Oklahoma City</option>
+            </select>
+          </div>
+          <button class="submit-btn">Submit Video for Tracking</button>
+          <p style="font-size: 12px; color: var(--text-dim); margin-top: 12px; text-align: center;">
+            We'll start tracking views within 24 hours. Rewards calculated weekly.
+          </p>
+        </div>
+      </div>
+    </div>
+    
+  </main>
+  
+  <script>
+    setTimeout(() => document.getElementById('splash').classList.add('hidden'), 1500);
+    
+    function showPage(id) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      event.target.classList.add('active');
+    }
+    
+    function copyLink(btn) {
+      const text = btn.previousElementSibling.textContent;
+      navigator.clipboard.writeText(text);
+      btn.textContent = '✓ Copied!';
+      setTimeout(() => btn.textContent = '📋 Copy', 2000);
+    }
+  </script>
+</body>
+</html>
