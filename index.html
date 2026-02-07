@@ -28,6 +28,29 @@
       min-height: 100vh;
     }
     
+    /* Splash */
+    #splash {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.5s;
+    }
+    #splash.hidden { opacity: 0; pointer-events: none; }
+    #splash img {
+      max-width: 85%;
+      max-height: 30vh;
+      animation: pulse-glow 2s ease-in-out infinite;
+    }
+    @keyframes pulse-glow {
+      0%, 100% { filter: drop-shadow(0 8px 32px rgba(236, 72, 153, 0.4)); }
+      50% { filter: drop-shadow(0 8px 48px rgba(168, 85, 247, 0.6)); }
+    }
+    
     .header {
       background: linear-gradient(135deg, var(--pink), var(--purple));
       padding: 24px 20px;
@@ -225,6 +248,11 @@
   </style>
 </head>
 <body>
+  <!-- Splash -->
+  <div id="splash">
+    <img src="influencer-logo.jpg" alt="The Light Park Influencer">
+  </div>
+  
   <div class="header">
     <h1>🌟 Influencer Portal</h1>
     <p>Manage creator partnerships and track campaign performance</p>
@@ -485,6 +513,9 @@
       document.getElementById(`tab-${tab}`).style.display = 'block';
       event.target.classList.add('active');
     }
+    
+    // Hide splash after 2s
+    setTimeout(() => document.getElementById('splash').classList.add('hidden'), 2000);
   </script>
 </body>
 </html>
