@@ -114,6 +114,7 @@
       .form-row { grid-template-columns: 1fr; }
     }
   </style>
+  <script src="supabase-sync.js"></script>
 </head>
 <body>
   <!-- LOGIN SCREEN -->
@@ -140,7 +141,10 @@
   <!-- MAIN APP (hidden until login) -->
   <div id="main-app" style="display:none;">
   
-  <div class="header">
+  <div class="header" style="position: relative; padding-top: 50px;">
+      <a href="https://thelightparkops.com" style="position: absolute; top: 20px; left: 20px; color: #a855f7; text-decoration: none; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; transition: all 0.2s; z-index: 10;" onmouseover="this.style.color='#06d6a0'" onmouseout="this.style.color='#a855f7'">
+        ← Dashboard
+      </a>
     <h1>🌟 <span id="header-title">Influencer Portal</span></h1>
     <p id="header-subtitle">Track Performance & Reward Creators</p>
     <button onclick="logout()" style="position:absolute;top:20px;right:20px;background:rgba(255,255,255,0.2);border:none;color:white;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;">Logout</button>
