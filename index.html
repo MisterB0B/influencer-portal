@@ -115,39 +115,20 @@
     }
   </style>
   <script src="supabase-sync.js"></script>
+  <script src="/shared/supabase-auth.js"></script>
+  <script src="/shared/activity-logger.js"></script>
+  <script src="/shared/auth-gate.js" data-app="Influencer Portal" data-icon="📱"></script>
 </head>
 <body>
-  <!-- LOGIN SCREEN -->
-  <div id="login-screen">
-    <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;">
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:40px;max-width:400px;width:100%;text-align:center;">
-        <h1 style="font-size:28px;margin-bottom:8px;">🌟 Influencer Portal</h1>
-        <p style="color:var(--text-dim);margin-bottom:32px;">The Light Park Creator Dashboard</p>
-        
-        <div style="margin-bottom:20px;">
-          <input type="text" id="login-handle" placeholder="Enter your Instagram handle" style="width:100%;padding:14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:16px;text-align:center;">
-        </div>
-        <button onclick="loginInfluencer()" class="btn btn-primary" style="width:100%;padding:14px;font-size:16px;">View My Stats</button>
-        
-        <div style="margin:24px 0;color:var(--text-dim);font-size:13px;">— or —</div>
-        
-        <button onclick="loginAdmin()" class="btn btn-outline" style="width:100%;">🔐 Admin Login</button>
-        
-        <p id="login-error" style="color:var(--red);margin-top:16px;display:none;"></p>
-      </div>
-    </div>
-  </div>
-
-  <!-- MAIN APP (hidden until login) -->
-  <div id="main-app" style="display:none;">
+  <!-- MAIN APP -->
+  <div id="main-app">
   
   <div class="header" style="position: relative; padding-top: 50px;">
       <a href="https://thelightparkops.com" style="position: absolute; top: 20px; left: 20px; color: #a855f7; text-decoration: none; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; transition: all 0.2s; z-index: 10;" onmouseover="this.style.color='#06d6a0'" onmouseout="this.style.color='#a855f7'">
         ← Dashboard
       </a>
-    <h1>🌟 <span id="header-title">Influencer Portal</span></h1>
-    <p id="header-subtitle">Track Performance & Reward Creators</p>
-    <button onclick="logout()" style="position:absolute;top:20px;right:20px;background:rgba(255,255,255,0.2);border:none;color:white;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;">Logout</button>
+    <h1>🌟 Influencer Portal</h1>
+    <p>Track Performance & Reward Creators</p>
   </div>
   
   <div class="container">
@@ -489,170 +470,13 @@
     document.getElementById('stats-modal').addEventListener('click', e => { if (e.target.id === 'stats-modal') closeModal(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
     
-    // Login system
-    let currentUser = null; // null = not logged in, 'admin' = admin, or influencer key
-    const ADMIN_PIN = '2026';
+    // Initialize on page load
+    loadInfluencers();
     
-    function loginInfluencer() {
-      const handle = document.getElementById('login-handle').value.trim().toLowerCase().replace('@', '');
-      if (!handle) {
-        showLoginError('Please enter your Instagram handle');
-        return;
-      }
-      
-      // Check if this handle exists in our influencers
-      loadInfluencers().then(() => {
-        const found = influencers.find(i => 
-          (i.key && i.key.toLowerCase() === handle) ||
-          (i.handle && i.handle.toLowerCase().replace('@', '') === handle) ||
-          (i.instagram && i.instagram.toLowerCase() === handle)
-        );
-        
-        if (!found) {
-          showLoginError('Handle not found. Are you a confirmed Light Park creator?');
-          return;
-        }
-        
-        currentUser = found.key;
-        showMainApp();
-      });
-    }
-    
-    function loginAdmin() {
-      const pin = prompt('Enter admin PIN:');
-      if (pin === ADMIN_PIN) {
-        currentUser = 'admin';
-        loadInfluencers().then(() => showMainApp());
-      } else if (pin !== null) {
-        showLoginError('Invalid PIN');
-      }
-    }
-    
-    function showLoginError(msg) {
-      const el = document.getElementById('login-error');
-      el.textContent = msg;
-      el.style.display = 'block';
-      setTimeout(() => el.style.display = 'none', 3000);
-    }
-    
-    function showMainApp() {
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('main-app').style.display = 'block';
-      
-      if (currentUser === 'admin') {
-        document.getElementById('header-title').textContent = 'Influencer Portal (Admin)';
-        document.getElementById('header-subtitle').textContent = 'Track Performance & Reward Creators';
-        document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
-        render();
-      } else {
-        // Influencer view - show only their stats
-        const inf = influencers.find(i => i.key === currentUser);
-        document.getElementById('header-title').textContent = 'My Dashboard';
-        document.getElementById('header-subtitle').textContent = 'Welcome, ' + (inf?.name || currentUser);
-        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
-        renderInfluencerView(inf);
-      }
-    }
-    
-    function renderInfluencerView(inf) {
-      if (!inf) return;
-      
-      const earned = (inf.ticketsSold || 0) * (inf.commissionRate || 0);
-      const owed = earned - (inf.amountPaid || 0);
-      
-      // Update stats for this influencer only
-      document.getElementById('stat-total').textContent = inf.videosPosted || 0;
-      document.querySelector('#stat-total').closest('.stat-card').querySelector('.stat-label').textContent = 'Videos';
-      
-      document.getElementById('stat-videos').textContent = inf.ticketsSold || 0;
-      document.querySelector('#stat-videos').closest('.stat-card').querySelector('.stat-label').textContent = 'Tickets Sold';
-      
-      document.getElementById('stat-tickets').textContent = '$' + earned.toFixed(0);
-      document.querySelector('#stat-tickets').closest('.stat-card').querySelector('.stat-label').textContent = 'Earned';
-      
-      document.getElementById('stat-owed').textContent = '$' + (inf.amountPaid || 0).toFixed(0);
-      document.querySelector('#stat-owed').closest('.stat-card').querySelector('.stat-label').textContent = 'Paid';
-      
-      document.getElementById('stat-paid').textContent = '$' + (owed > 0 ? owed.toFixed(0) : '0');
-      document.querySelector('#stat-paid').closest('.stat-card').querySelector('.stat-label').textContent = 'Pending';
-      
-      // Hide tabs, show personal dashboard
-      document.querySelector('.tabs').style.display = 'none';
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      
-      const list = document.getElementById('creators-list');
-      list.parentElement.classList.add('active');
-      list.parentElement.querySelector('.section-title').textContent = '📊 My Performance';
-      
-      list.innerHTML = `
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;">
-          <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
-            <div class="influencer-avatar" style="width:80px;height:80px;font-size:28px;">${inf.name.split(' ').map(n => n[0]).join('').slice(0,2)}</div>
-            <div>
-              <div style="font-size:20px;font-weight:700;">${inf.name}</div>
-              <div style="color:var(--pink);">${inf.handle || '@' + inf.key}</div>
-              <div style="color:var(--text-dim);font-size:13px;">📍 ${inf.market}</div>
-            </div>
-          </div>
-          
-          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px;">
-            <div style="background:var(--bg);padding:16px;border-radius:8px;text-align:center;">
-              <div style="font-size:28px;font-weight:700;color:var(--purple);">${inf.videosPosted || 0}</div>
-              <div style="font-size:12px;color:var(--text-dim);">Videos Posted</div>
-            </div>
-            <div style="background:var(--bg);padding:16px;border-radius:8px;text-align:center;">
-              <div style="font-size:28px;font-weight:700;color:var(--teal);">${inf.ticketsSold || 0}</div>
-              <div style="font-size:12px;color:var(--text-dim);">Tickets Sold</div>
-            </div>
-          </div>
-          
-          <div style="background:linear-gradient(135deg,rgba(168,85,247,0.2),rgba(236,72,153,0.2));padding:20px;border-radius:8px;">
-            <div style="font-size:14px;color:var(--text-dim);margin-bottom:8px;">💰 Commission Earnings</div>
-            <div style="display:flex;justify-content:space-between;align-items:center;">
-              <div>
-                <div style="font-size:12px;color:var(--text-dim);">Rate: $${inf.commissionRate || 0}/ticket</div>
-                <div style="font-size:24px;font-weight:700;color:var(--teal);">$${earned.toFixed(2)} earned</div>
-              </div>
-              <div style="text-align:right;">
-                <div style="font-size:12px;color:var(--text-dim);">Paid: $${(inf.amountPaid || 0).toFixed(2)}</div>
-                <div style="font-size:18px;font-weight:700;color:${owed > 0 ? 'var(--orange)' : 'var(--green)'};">${owed > 0 ? '$' + owed.toFixed(2) + ' pending' : '✓ Paid up'}</div>
-              </div>
-            </div>
-          </div>
-          
-          ${inf.ticketsSold > 0 ? `
-          <div style="margin-top:20px;padding:16px;background:var(--bg);border-radius:8px;text-align:center;">
-            <div style="font-size:13px;color:var(--text-dim);">🎉 Great job! Keep posting to earn more!</div>
-          </div>
-          ` : `
-          <div style="margin-top:20px;padding:16px;background:var(--bg);border-radius:8px;text-align:center;">
-            <div style="font-size:13px;color:var(--text-dim);">📱 Post videos with your unique link to start earning!</div>
-          </div>
-          `}
-        </div>
-      `;
-    }
-    
-    function logout() {
-      currentUser = null;
-      document.getElementById('login-screen').style.display = 'block';
-      document.getElementById('main-app').style.display = 'none';
-      document.getElementById('login-handle').value = '';
-      document.querySelector('.tabs').style.display = '';
-    }
-    
-    // Handle enter key on login
-    document.getElementById('login-handle').addEventListener('keypress', e => {
-      if (e.key === 'Enter') loginInfluencer();
-    });
-    
-    // Refresh on tab focus (only if logged in)
+    // Refresh on tab focus
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible' && currentUser) {
-        loadInfluencers().then(() => {
-          if (currentUser === 'admin') render();
-          else renderInfluencerView(influencers.find(i => i.key === currentUser));
-        });
+      if (document.visibilityState === 'visible') {
+        loadInfluencers();
       }
     });
   </script>
